@@ -1,0 +1,17 @@
+-- Wanasa Al Deerah V23 reviewed migration (PostgreSQL 16+).
+CREATE TABLE IF NOT EXISTS v23_worker_heartbeats (
+  id SERIAL PRIMARY KEY,
+  worker_name VARCHAR(128) NOT NULL UNIQUE,
+  status VARCHAR(32) NOT NULL DEFAULT 'STARTING',
+  last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  detail TEXT
+);
+CREATE TABLE IF NOT EXISTS v23_operational_incidents (
+  id SERIAL PRIMARY KEY,
+  incident_key VARCHAR(128) NOT NULL UNIQUE,
+  severity VARCHAR(32) NOT NULL DEFAULT 'INFO',
+  status VARCHAR(32) NOT NULL DEFAULT 'OPEN',
+  detail TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved BOOLEAN NOT NULL DEFAULT FALSE
+);

@@ -1,0 +1,5 @@
+{
+  "project_info": {"project_number": "REPLACE", "project_id": "REPLACE", "storage_bucket": "REPLACE"},
+  "client": [{"client_info": {"mobilesdk_app_id": "REPLACE", "android_client_info": {"package_name": "com.wanasa.wanasa_aldeerah"}}, "api_key": [{"current_key": "REPLACE"}]}],
+  "configuration_version": "1"
+}

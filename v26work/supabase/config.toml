@@ -1,0 +1,4 @@
+project_id = "wanasa-aldeerah"
+[db]
+enabled = true
+major_version = 17

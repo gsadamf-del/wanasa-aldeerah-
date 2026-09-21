@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: wanasa
+      POSTGRES_USER: wanasa
+      POSTGRES_PASSWORD: wanasa
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ../backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://wanasa:wanasa@db:5432/wanasa
+      JWT_SECRET_KEY: change-me-in-production
+      PAYMENT_WEBHOOK_SECRET: change-me-webhook
+      CORS_ORIGINS: "*"
+      ENVIRONMENT: development
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ../backend
+    command: python worker.py
+    environment:
+      DATABASE_URL: postgresql+psycopg://wanasa:wanasa@db:5432/wanasa
+      JWT_SECRET_KEY: change-me-in-production
+      PAYMENT_WEBHOOK_SECRET: change-me-webhook
+      CORS_ORIGINS: "*"
+      ENVIRONMENT: development
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

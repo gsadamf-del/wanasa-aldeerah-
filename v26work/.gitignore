@@ -1,0 +1,57 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+!.env.v25.production.example
+*.pem
+*.p8
+*.p12
+*.jks
+*.keystore
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+backend/*.db
+backend/*.sqlite*
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+build/
+mobile/android/.gradle/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/ephemeral/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS/build outputs
+*.apk
+*.aab
+*.ipa
+*.exe
+*.msix
+*.app
+*.jks
+*.keystore
+mobile/android/key.properties
+mobile/android/upload-keystore.jks
+mobile/ios/ExportOptions.plist
+*.p12
+*.mobileprovision
+*.pem
+.env
