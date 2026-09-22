@@ -1,160 +1,254 @@
 name: Wanasa V26 Release
+
 on:
   workflow_dispatch:
   push:
     tags: ["v26.*"]
+
 permissions:
   contents: read
+
 concurrency:
   group: wanasa-v26-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
+
   backend:
     runs-on: ubuntu-latest
-    defaults: {run: {working-directory: backend}}
+    defaults:
+      run:
+        working-directory: v26work/backend
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
+        with:
+          python-version: "3.12"
+
       - run: pip install -r requirements.txt
       - run: pytest -q
       - run: python -m compileall app
 
+
   android-aab:
     needs: backend
     runs-on: ubuntu-latest
-    defaults: {run: {working-directory: mobile}}
+    defaults:
+      run:
+        working-directory: v26work/mobile
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
-        with: {channel: stable}
-      - run: flutter create --platforms=android,ios,web,windows --org com.wanasa --project-name wanasa_aldeerah .
+        with:
+          channel: stable
+
       - run: flutter pub get
       - run: flutter test
+
       - name: Configure Android signing
         shell: bash
         run: |
           test -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" || (echo "ANDROID_KEYSTORE_BASE64 is required" && exit 1)
+
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+
           cat > android/key.properties <<EOF
           storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
           storeFile=upload-keystore.jks
           EOF
+
       - name: Configure Gradle signing
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
-          p=Path('android/app/build.gradle')
-          s=p.read_text()
-          if 'def keystoreProperties' not in s:
-              s=s.replace('android {', '''def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) { keystoreProperties.load(new FileInputStream(keystorePropertiesFile)) }
 
-android {''', 1)
-          if 'signingConfigs {' not in s:
-              s=s.replace('buildTypes {', '''signingConfigs {
-        release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? rootProject.file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
-        }
-    }
-    buildTypes {''', 1)
-          if 'signingConfig signingConfigs.release' not in s:
-              s=re.sub(r'(buildTypes\s*\{\s*release\s*\{)', r'\1\n            signingConfig signingConfigs.release', s, count=1)
+          p = Path("android/app/build.gradle")
+
+          if not p.exists():
+              print("build.gradle not found - skipping dynamic signing configuration")
+              raise SystemExit(0)
+
+          s = p.read_text()
+
+          if "def keystoreProperties" not in s:
+              s = s.replace(
+                  "android {",
+                  """def keystoreProperties = new Properties()
+          def keystorePropertiesFile = rootProject.file("key.properties")
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+          }
+
+          android {""",
+                  1
+              )
+
+          if "signingConfigs {" not in s:
+              s = s.replace(
+                  "buildTypes {",
+                  """signingConfigs {
+                  release {
+                      keyAlias keystoreProperties["keyAlias"]
+                      keyPassword keystoreProperties["keyPassword"]
+                      storeFile keystoreProperties["storeFile"] ? rootProject.file(keystoreProperties["storeFile"]) : null
+                      storePassword keystoreProperties["storePassword"]
+                  }
+              }
+
+              buildTypes {""",
+                  1
+              )
+
+          if "signingConfig signingConfigs.release" not in s:
+              s = re.sub(
+                  r"(buildTypes\\s*\\{\\s*release\\s*\\{)",
+                  r"\\1\n            signingConfig signingConfigs.release",
+                  s,
+                  count=1
+              )
+
           p.write_text(s)
           PY
+
       - run: flutter build appbundle --release --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: wanasa-v26-android-aab
-          path: mobile/build/app/outputs/bundle/release/app-release.aab
+          path: v26work/mobile/build/app/outputs/bundle/release/app-release.aab
+
 
   windows-installer:
     needs: backend
     runs-on: windows-latest
-    defaults: {run: {working-directory: mobile}}
+    defaults:
+      run:
+        working-directory: v26work/mobile
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
-        with: {channel: stable}
-      - run: flutter create --platforms=windows,android,ios,web --org com.wanasa --project-name wanasa_aldeerah .
+        with:
+          channel: stable
+
       - run: flutter pub get
       - run: flutter test
+
       - run: flutter build windows --release --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+
       - name: Build Inno Setup installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: installer/wanasa-aldeerah.iss
+          path: v26work/installer/wanasa-aldeerah.iss
+
       - uses: actions/upload-artifact@v4
         with:
           name: wanasa-v26-windows-installer
-          path: installer/output/*.exe
+          path: v26work/installer/output/*.exe
+
 
   web:
     needs: backend
     runs-on: ubuntu-latest
-    defaults: {run: {working-directory: mobile}}
+    defaults:
+      run:
+        working-directory: v26work/mobile
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
-        with: {channel: stable}
-      - run: flutter create --platforms=web,android,ios,windows --org com.wanasa --project-name wanasa_aldeerah .
+        with:
+          channel: stable
+
       - run: flutter pub get
       - run: flutter test
+
       - run: flutter build web --release --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: wanasa-v26-web
-          path: mobile/build/web/
+          path: v26work/mobile/build/web/
+
 
   ios-ipa:
     needs: backend
     runs-on: macos-latest
-    defaults: {run: {working-directory: mobile}}
+    defaults:
+      run:
+        working-directory: v26work/mobile
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
-        with: {channel: stable}
-      - run: flutter create --platforms=ios,android,web,windows --org com.wanasa --project-name wanasa_aldeerah .
+        with:
+          channel: stable
+
       - run: flutter pub get
+
       - name: Import Apple distribution certificate
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
           p12-password: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+
       - name: Download App Store provisioning profile
         uses: apple-actions/download-provisioning-profiles@v4
         with:
           bundle-id: com.wanasa.aldeerah
           profile-type: IOS_APP_STORE
+
       - name: Prepare export options
         run: cp ios/ExportOptions.plist.example ios/ExportOptions.plist
+
       - name: Build IPA
         env:
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
           DEVELOPMENT_TEAM: ${{ secrets.APPLE_TEAM_ID }}
           PROVISIONING_PROFILE_SPECIFIER: ${{ secrets.IOS_PROVISIONING_PROFILE_NAME }}
+
         run: |
           /usr/libexec/PlistBuddy -c "Set :teamID $DEVELOPMENT_TEAM" ios/ExportOptions.plist
+
           /usr/libexec/PlistBuddy -c "Set :provisioningProfiles:com.wanasa.aldeerah $PROVISIONING_PROFILE_SPECIFIER" ios/ExportOptions.plist
-          flutter build ipa --release --dart-define=API_BASE_URL="$API_BASE_URL" --export-options-plist=ios/ExportOptions.plist
+
+          flutter build ipa \
+            --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --export-options-plist=ios/ExportOptions.plist
+
       - uses: actions/upload-artifact@v4
         with:
           name: wanasa-v26-ios-ipa
-          path: mobile/build/ios/ipa/*.ipa
+          path: v26work/mobile/build/ios/ipa/*.ipa
+
 
   release-manifest:
-    needs: [android-aab, windows-installer, web, ios-ipa]
+    needs:
+      - android-aab
+      - windows-installer
+      - web
+      - ios-ipa
+
     runs-on: ubuntu-latest
+
     steps:
-      - run: printf '%s\n' '{"version":"26.0.0","artifacts":["android-aab","windows-installer","web","ios-ipa"],"database_revision":"202609220001"}' > release-manifest.json
+      - run: |
+          printf '%s\n' \
+          '{"version":"26.0.0","artifacts":["android-aab","windows-installer","web","ios-ipa"],"database_revision":"202609220001"}' \
+          > release-manifest.json
+
       - uses: actions/upload-artifact@v4
         with:
           name: wanasa-v26-release-manifest
