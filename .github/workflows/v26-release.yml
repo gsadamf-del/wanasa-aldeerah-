@@ -1,9 +1,10 @@
 name: Wanasa V26 Release
 
-on:
+"on":
   workflow_dispatch:
   push:
-    tags: ["v26.*"]
+    tags:
+      - "v26.*"
 
 permissions:
   contents: read
