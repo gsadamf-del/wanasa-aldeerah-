@@ -14,7 +14,6 @@ from app.api_v24 import router as v24_router
 from app.api_v25 import router as v25_router
 from app.services.production_v23 import InMemoryRateLimiterV23, validate_production_settings
 from sqlalchemy import text
-from sqlalchemy import text
 import logging, json, time
 
 app = FastAPI(title="Wanasa Al Deerah API", version="26.0.0")
