@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('وناسة الديرة V25')),
+        appBar: AppBar(title: const Text('وناسة الديرة V26')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
