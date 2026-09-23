@@ -1,0 +1,54 @@
+name: Generate Android Signing Key
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-key:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Generate signing key
+        shell: bash
+        run: |
+          set -e
+
+          KEYSTORE_PASSWORD="$(openssl rand -hex 24)"
+          KEY_PASSWORD="$KEYSTORE_PASSWORD"
+          KEY_ALIAS="wanasa-v26"
+
+          keytool -genkeypair \
+            -v \
+            -keystore wanasa-v26-release.jks \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -keypass "$KEY_PASSWORD" \
+            -alias "$KEY_ALIAS" \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Wanasa V26, OU=Wanasa, O=Wanasa, L=Sanaa, ST=Amanat Alasimah, C=YE"
+
+          echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" > android-signing-credentials.txt
+          echo "KEY_PASSWORD=$KEY_PASSWORD" >> android-signing-credentials.txt
+          echo "KEY_ALIAS=$KEY_ALIAS" >> android-signing-credentials.txt
+
+          base64 -w 0 wanasa-v26-release.jks > wanasa-v26-release.jks.base64
+
+      - name: Upload signing files
+        uses: actions/upload-artifact@v4
+        with:
+          name: wanasa-v26-android-signing
+          path: |
+            wanasa-v26-release.jks
+            wanasa-v26-release.jks.base64
+            android-signing-credentials.txt
+          retention-days: 1
