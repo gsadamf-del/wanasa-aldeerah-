@@ -144,9 +144,9 @@ jobs:
       - run: flutter pub get
       - run: flutter test
 
-      - - run: flutter build windows --release --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
-  env:
-    CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+      - run: flutter build windows --release --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
 
       - name: Build Inno Setup installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
