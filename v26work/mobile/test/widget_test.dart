@@ -5,7 +5,7 @@ void main() {
   testWidgets('Wanasa V26 home page loads correctly', (tester) async {
     await tester.pumpWidget(const WanasaApp());
 
-    expect(find.text('وناسة الديرة V25'), findsOneWidget);
+    expect(find.text('وناسة الديرة V26'), findsOneWidget);
     expect(find.text('منصة التجارة والتصفية السريعة'), findsOneWidget);
 
     expect(find.text('حساب العميل'), findsOneWidget);
