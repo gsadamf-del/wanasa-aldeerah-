@@ -1,0 +1,42 @@
+name: Prepare Flutter Windows and Web Platforms
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-platforms:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Generate missing Windows and Web platform files
+        working-directory: v26work/mobile
+        run: flutter create . --platforms=windows,web
+
+      - name: Commit generated platform files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add v26work/mobile/windows v26work/mobile/web
+
+          if git diff --cached --quiet; then
+            echo "Windows/Web platform files are already present."
+            exit 0
+          fi
+
+          git commit -m "Add Windows and Web platform support"
+          git push origin HEAD:main
