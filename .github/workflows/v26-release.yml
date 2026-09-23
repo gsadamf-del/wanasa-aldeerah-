@@ -185,6 +185,7 @@ jobs:
 
 
   ios-ipa:
+     if: ${{ false }}
     needs: backend
     runs-on: macos-latest
     defaults:
