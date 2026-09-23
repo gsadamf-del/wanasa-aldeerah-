@@ -250,7 +250,7 @@ jobs:
     steps:
       - run: |
           printf '%s\n' \
-          '{"version":"26.0.0","artifacts":["android-aab","windows-installer","web","ios-ipa"],"database_revision":"202609220001"}' \
+          '{"version":"26.0.0","artifacts":["android-aab","windows-installer","web"],"database_revision":"202609220001"}' \
           > release-manifest.json
 
       - uses: actions/upload-artifact@v4
