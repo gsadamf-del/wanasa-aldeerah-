@@ -238,6 +238,7 @@ jobs:
 
 
   release-manifest:
+    if: ${{ always() }}
     needs:
       - android-aab
       - windows-installer
